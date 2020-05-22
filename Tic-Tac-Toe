@@ -1,0 +1,103 @@
+def analysis(string):
+    global x_pos
+    global o_pos
+    result = ''
+    line_arr = [[0, 1, 2],
+                [3, 4, 5],
+                [6, 7, 8],
+                [0, 3, 6],
+                [1, 4, 7],
+                [2, 5, 8],
+                [0, 4, 8],
+                [2, 4, 6]]
+    x_line = 0
+    o_line = 0
+    for index, value in enumerate(string):
+        if value == 'X':
+            if index not in x_pos:
+                x_pos.append(index)
+        if value == 'O':
+            if index not in o_pos:
+                o_pos.append(index)
+    if abs(len(x_pos) - len(o_pos)) > 1:
+        result = 'Impossible'
+    if len(x_pos) >= 3:
+        for ele in line_arr:
+            x_flag = 0
+            for elem in ele:
+                if elem not in x_pos:
+                    break
+                else:
+                    x_flag += 1
+            if x_flag == 3:
+                x_line += 1
+    if len(o_pos) >= 3:
+        for ele in line_arr:
+            o_flag = 0
+            for elem in ele:
+                if elem not in o_pos:
+                    break
+                else:
+                    o_flag += 1
+            if o_flag == 3:
+                o_line += 1
+    if x_line > 1 or o_line > 1:
+        result = 'Impossible'
+    if x_line == 1 and o_line == 1:
+        result = 'Impossible'
+    if not result:
+        if x_line + o_line == 1:       # One has to win so addition would be 1
+            if x_line:
+                result = 'X wins'
+            else:
+                result = 'O wins'
+        if x_line + o_line == 0:
+            if len(x_pos) + len(o_pos) == 9:
+                result = 'Draw'
+            else:
+                result = 'Game not finished'
+    return result
+
+
+def show_matrix(str_arr):
+    print('---------')
+    print('|', str_arr[0], str_arr[1], str_arr[2], '|')
+    print('|', str_arr[3], str_arr[4], str_arr[5], '|')
+    print('|', str_arr[6], str_arr[7], str_arr[8], '|')
+    print('---------')
+
+
+str_ar = list('_________')
+x_pos = []
+o_pos = []
+turn = 1
+show_matrix(str_ar)
+flag = True
+while flag:
+    try:
+        coord = list(map(int, input().split()))
+    except ValueError:
+        print('You should enter numbers!')
+        continue
+    row = coord[0]
+    column = coord[1]
+    pos = 8 + row - 3*column
+    if pos in x_pos or pos in o_pos:
+        print('This cell is occupied! Choose another one!')
+        continue
+    if row not in range(1, 4) or column not in range(1, 4):
+        print('Coordinates should be from 1 to 3!')
+        continue
+    if turn % 2:
+        turn_str = 'X'
+    else:
+        turn_str = 'O'
+    turn += 1
+    str_ar[pos] = turn_str
+    show_matrix(str_ar)
+    des_result = analysis(str_ar)
+    if des_result == 'Game not finished':
+        continue
+    else:
+        print(des_result)
+        break
