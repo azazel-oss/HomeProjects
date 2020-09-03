@@ -1,0 +1,121 @@
+public class CoffeeActions {
+    private int water;
+    private int coffee;
+    private int milk;
+    private int money;
+    private int cups;
+
+    public CoffeeActions() {
+        this.water = 400;
+        this.coffee = 120;
+        this.milk = 540;
+        this.money = 550;
+        this.cups = 9;
+    }
+
+    public void take() {
+        System.out.println("I gave you $" + this.money);
+        this.money = 0;
+    }
+
+    public void fill(int water, int milk, int coffee, int cups) {
+        this.water += water;
+        this.milk += milk;
+        this.coffee += coffee;
+        this.cups += cups;
+    }
+
+    public void buy(int type) {
+
+        boolean flag = canWork(type);
+        if (!flag) {
+            return;
+        }
+        System.out.println("I have enough resources, making you a coffee!");
+        switch (type) {
+            case 1:
+                this.water -= 250;
+                this.coffee -= 16;
+                this.money += 4;
+                break;
+
+            case 2:
+                this.water -= 350;
+                this.milk -= 75;
+                this.coffee -= 20;
+                this.money += 7;
+                break;
+
+            case 3:
+                this.water -= 200;
+                this.milk -= 100;
+                this.coffee -= 12;
+                this.money += 6;
+                break;
+
+        }
+        this.cups--;
+    }
+
+    private boolean canWork(int type) {
+        if (this.cups <= 0) {
+            System.out.println("Sorry, not enough cups!");
+            return false;
+        }
+        switch(type) {
+            case 1:
+                if (this.water - (250) < 0) {
+                    System.out.println("Sorry, not enough water!");
+                    return false;
+                }
+                if (this.coffee - (16) < 0) {
+                    System.out.println("Sorry, not enough coffee!");
+                    return false;
+                }
+                break;
+
+            case 2:
+                if (this.water - (350) < 0) {
+                    System.out.println("Sorry, not enough water!");
+                    return false;
+                }
+                if (this.coffee - (20) < 0) {
+                    System.out.println("Sorry, not enough coffee!");
+                    return false;
+                }
+                if (this.milk - (75) < 0) {
+                    System.out.println("Sorry, not enough milk!");
+                    return false;
+                }
+                break;
+
+            case 3:
+                if (this.water - (200) < 0) {
+                    System.out.println("Sorry, not enough water!");
+                    return false;
+                }
+                if (this.coffee - (12) < 0) {
+                    System.out.println("Sorry, not enough coffee!");
+                    return false;
+                }
+                if (this.milk - (100) < 0) {
+                    System.out.println("Sorry, not enough milk!");
+                    return false;
+                }
+                break;
+
+        }
+
+        return true;
+    }
+
+
+    public void printCoffeeStatus() {
+        System.out.println("The coffee machine has:");
+        System.out.println(this.water + " of water");
+        System.out.println(this.milk + " of milk");
+        System.out.println(this.coffee + " of coffee beans");
+        System.out.println(this.cups + " of disposable cups");
+        System.out.println(this.money + " of money");
+    }
+}
