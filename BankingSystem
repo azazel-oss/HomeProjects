@@ -1,0 +1,219 @@
+import random
+import _sqlite3
+
+
+def is_card_number(transfer_to_account):
+    digits = [int(item) for item in transfer_to_account]
+    sum_check = 0
+    for i in range(len(digits)):
+        if not (i + 1) % 2:
+            sum_check += digits[i]
+        else:
+            if digits[i] * 2 > 9:
+                sum_check += ((digits[i] * 2) - 9)
+            else:
+                sum_check += digits[i] * 2
+    return not sum_check % 10
+
+
+class Banking:
+
+    def __init__(self):
+        self.checksum = None
+        self.random_digits = None
+        self.edited_digits = list()
+        self.user_number = None
+        self.pin = None
+        self.main_menu()
+
+    def main_menu(self):
+        user_choice = input('1. Create an account\n2. Log into account\n0. Exit\n')
+        if user_choice == '0':
+            self.close()
+        elif user_choice == '1':
+            self.create_account()
+        elif user_choice == '2':
+            self.log_in_check()
+        else:
+            print('Please choose a number from the menu')
+            self.main_menu()
+
+    def close(self):
+        print('Bye!')
+        exit()
+
+    def create_account(self):
+        conn_inside = _sqlite3.connect('card.s3db')
+        cur_inside = conn_inside.cursor()
+
+        self.random_digits = '400000' + ''.join(str(item) for item in (random.choices(range(0, 9), k=9)))
+        self.algorithm()
+        number = self.random_digits + self.checksum
+        pin = ''.join(str(item) for item in (random.choices(range(0, 9), k=4)))
+        cur_inside.execute('''INSERT INTO card(number, pin) VALUES (?, ?)''', (number, pin))
+        conn_inside.commit()
+        print(f'Your card has been created\nYour card number:\n{number}\nYour card PIN:\n{pin}')
+        self.main_menu()
+
+    def algorithm(self):
+        digit_list = list(int(i) for i in list(self.random_digits))
+        self.edited_digits.clear()
+        edit_digit = []
+        for i in range(len(digit_list)):
+            if (i + 1) % 2 != 0:
+                edit_digit.append(digit_list[i] * 2)
+            else:
+                edit_digit.append(digit_list[i])
+        for i in edit_digit:
+            if i > 9:
+                self.edited_digits.append(i - 9)
+            else:
+                self.edited_digits.append(i)
+        division = (sum(self.edited_digits) // 10 + 1) * 10
+        if sum(self.edited_digits) % 10 != 0:
+            self.checksum = str(division - sum(self.edited_digits))
+        else:
+            self.checksum = '0'
+
+    def log_in_check(self):
+        self.user_number = input('Enter your card number:\n')
+        user_pin = input('Enter your PIN:\n')
+        self.pin = user_pin
+        conn_inside = _sqlite3.connect('card.s3db')
+        cur_inside = conn_inside.cursor()
+        cur_inside.execute('''SELECT 
+                            pin
+                        FROM 
+                            card
+                        WHERE
+                            number == ?''', [self.user_number])
+        result = cur_inside.fetchone()
+        if result is not None:
+            if result[0] == user_pin:
+                print('You have successfully logged in!')
+                self.log_in_menu()
+            else:
+                print('Wrong card number of PIN!')
+        else:
+            print('Wrong card number of PIN!')
+        self.main_menu()
+
+    def log_in_menu(self):
+        user_choice = input('1. Balance\n'
+                            '2. Add income\n'
+                            '3. Do transfer\n'
+                            '4. Close account\n'
+                            '5. Log out\n'
+                            '0. Exit\n'
+                            )
+        if user_choice == '1':
+            self.balance()
+        if user_choice == '2':
+            self.add_money()
+        if user_choice == '3':
+            self.transfer_money()
+        if user_choice == '4':
+            self.close_account()
+        elif user_choice == '5':
+            print('You have successfully logged out!')
+            self.main_menu()
+        else:
+            self.close()
+
+    def balance(self):
+        conn_inside = _sqlite3.connect('card.s3db')
+        cur_inside = conn_inside.cursor()
+        cur_inside.execute('''SELECT
+                            balance
+                        FROM
+                            card
+                        WHERE
+                            number = ?''', [self.user_number])
+        balance = cur_inside.fetchone()
+        print(f'Balance = {balance[0]}')
+        self.log_in_menu()
+
+    def add_money(self):
+        income = int(input('Enter income:'))
+        conn_inside = _sqlite3.connect('card.s3db')
+        cur_inside = conn_inside.cursor()
+        cur_inside.execute('''SELECT
+                                    balance
+                                FROM
+                                    card
+                                WHERE
+                                    number = ?''', [self.user_number])
+        balance = cur_inside.fetchone()
+        cur_inside.execute('''DELETE
+                                FROM
+                                    card
+                                WHERE
+                                    number = ?''', [self.user_number])
+        cur_inside.execute('''INSERT INTO card(number, pin, balance) 
+                                VALUES (?, ?, ?)''', (self.user_number, self.pin, balance[0] + income))
+        print('Income was added!')
+        conn_inside.commit()
+        self.log_in_menu()
+
+# todo
+    def transfer_money(self):
+        transfer_to_account = input('Transfer\nEnter card number:')
+        conn_inside = _sqlite3.connect('card.s3db')
+        cur_inside = conn_inside.cursor()
+        cur_inside.execute('''SELECT * FROM card WHERE number = ?''', [transfer_to_account])
+        entry = cur_inside.fetchone()
+        if not is_card_number(transfer_to_account):
+            print('Probably you made a mistake in the card number. Please try again!')
+            self.log_in_menu()
+        if not entry:
+            print('Such a card does not exist.')
+            self.log_in_menu()
+        if entry[1] == self.user_number:
+            print("You can't transfer money to the same account!")
+            self.log_in_menu()
+        cur_inside.execute('''SELECT balance FROM card WHERE number = ?''', [self.user_number])
+        balance = cur_inside.fetchone()
+
+        transfer_amount = int(input('Enter how much money you want to transfer:'))
+        if transfer_amount > balance[0]:
+            print('Not enough money!')
+            self.log_in_menu()
+
+        cur_inside.execute('''DELETE FROM card WHERE number = ?''', [self.user_number])
+        cur_inside.execute('''INSERT INTO card(number, pin, balance) 
+                                        VALUES (?, ?, ?)''', (self.user_number, self.pin, balance[0] - transfer_amount))
+
+        cur_inside.execute('''DELETE FROM card WHERE number = ?''', [transfer_to_account])
+        cur_inside.execute('''INSERT INTO card(number, pin, balance) 
+                                        VALUES (?, ?, ?)''', (entry[1], entry[2], entry[3] + transfer_amount))
+        print('Success!')
+        conn_inside.commit()
+        self.log_in_menu()
+        pass
+
+    def close_account(self):
+        conn_inside = _sqlite3.connect('card.s3db')
+        cur_inside = conn_inside.cursor()
+        cur_inside.execute('''DELETE
+                                FROM
+                                   card
+                                WHERE
+                                   number = ?''', [self.user_number])
+        conn_inside.commit()
+        print('The account has been closed!')
+        self.log_in_menu()
+        pass
+
+
+conn = _sqlite3.connect('card.s3db')
+cur = conn.cursor()
+# cur.execute('DROP TABLE card')
+cur.execute('''CREATE TABLE IF NOT EXISTS card(
+                                                id INTEGER,
+                                                number TEXT,
+                                                pin TEXT,
+                                                balance INTEGER DEFAULT 0
+                                                );''')
+conn.commit()
+Banking()
+cur.close()
