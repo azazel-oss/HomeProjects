@@ -1,0 +1,258 @@
+def get_cofactor(a_matrix, row, column):
+    return [element[0: column] + element[column + 1:] for element in a_matrix[0: row] + a_matrix[row + 1:]]
+    pass
+
+
+def get_transpose(a_matrix, a_row, a_column):
+    c_matrix = [[0.0 for _ in range(a_row)] for _ in range(a_column)]
+    for i in range(a_row):
+        for j in range(a_column):
+            c_matrix[j][i] = a_matrix[i][j]
+    return c_matrix
+
+
+def multiply_constant(a_matrix, constant):
+    for i in range(len(a_matrix)):
+        for j in range(len(a_matrix[0])):
+            a_matrix[i][j] *= constant
+    return a_matrix
+    pass
+
+
+def determinant(a_matrix):
+    if len(a_matrix) == 2:
+        return a_matrix[0][0] * a_matrix[1][1] - a_matrix[0][1] * a_matrix[1][0]
+
+    elif len(a_matrix) == 1:
+        return a_matrix[0][0]
+
+    else:
+        det = 0
+        for i in range(len(a_matrix)):
+            sign = (-1) ** i
+            cofactor = get_cofactor(a_matrix, 0, i)
+            det += (sign * a_matrix[0][i] * determinant(cofactor))
+        return det
+        pass
+
+
+def inverse(a_matrix):
+    det = determinant(a_matrix)
+    aug_matrix = [[0 for _ in range(len(a_matrix[0]))] for _ in range(len(a_matrix))]
+    for i in range(len(a_matrix)):
+        for j in range(len(a_matrix[0])):
+            sign = (-1) ** (i + j)
+            aug_matrix[i][j] = sign * determinant(get_cofactor(a_matrix, i, j))
+    adjoint = get_transpose(aug_matrix, len(aug_matrix), len(aug_matrix[0]))
+
+    result = multiply_constant(adjoint, 1 / det)
+    return result
+    pass
+
+
+class Matrix:
+    def __init__(self):
+        self.menu()
+
+    def menu(self):
+        print('1. Add matrices')
+        print('2. Multiply matrix by a constant')
+        print('3. Multiply matrices')
+        print('4. Transpose matrix')
+        print('5. Calculate a determinant')
+        print('6. Inverse matrix')
+        print('0. Exit')
+
+        choice = int(input('Your choice: '))
+
+        if choice == 0:
+            exit()
+
+        if choice == 1:
+            self.add_matrices()
+
+        if choice == 2:
+            self.multiply_factor()
+
+        if choice == 3:
+            self.multiply_matrix()
+
+        if choice == 4:
+            self.transpose_menu()
+
+        if choice == 5:
+            self.determinant_matrix()
+
+        if choice == 6:
+            self.matrix_inverse()
+
+    def add_matrices(self):
+        a_param = list(map(int, input('Enter size of first matrix').strip().split(' ')))
+        a_row = a_param[0]
+        a_column = a_param[1]
+        a_matrix = []
+        print('Enter first matrix:')
+        for i in range(a_row):
+            a_matrix.append(list(map(float, input().split(' '))))
+
+        b_param = list(map(int, input('Enter the size of second matrix').split(' ')))
+        b_row = b_param[0]
+        b_column = b_param[1]
+        b_matrix = []
+        print('Enter second matrix:')
+        for i in range(b_row):
+            b_matrix.append(list(map(float, input().split(' '))))
+
+        if a_row == b_row and a_column == b_column:
+            for i in range(a_row):
+                for j in range(a_column):
+                    print(a_matrix[i][j] + b_matrix[i][j], end=' ')
+                print()
+        else:
+            print('The operation cannot be performed.')
+        self.menu()
+
+    def multiply_factor(self):
+        a_param = list(map(int, input('Enter size of matrix: ').split(' ')))
+        a_row = a_param[0]
+        a_column = a_param[1]
+        a_matrix = []
+        print('Enter matrix:')
+        for i in range(a_row):
+            a_matrix.append(list(map(float, input().split(' '))))
+        factor = float(input('Enter constant: '))
+        print('The result is:')
+        for i in range(len(a_matrix)):
+            for j in range(len(a_matrix[0])):
+                print(a_matrix[i][j] * factor, end=' ')
+            print()
+        self.menu()
+
+    def multiply_matrix(self):
+        a_param = list(map(int, input('Enter size of first matrix').split(' ')))
+        a_row = a_param[0]
+        a_column = a_param[1]
+        a_matrix = []
+        print('Enter first matrix:')
+        for i in range(a_row):
+            a_matrix.append(list(map(float, input().split(' '))))
+
+        b_param = list(map(int, input('Enter the size of second matrix').split(' ')))
+        b_row = b_param[0]
+        b_column = b_param[1]
+        b_matrix = []
+        print('Enter second matrix:')
+        for i in range(b_row):
+            b_matrix.append(list(map(float, input().split(' '))))
+
+        if a_column != b_row:
+            print('The operation cannot be performed.')
+            self.menu()
+        else:
+            print('The result is: ')
+            c_matrix = [[0 for _ in range(len(b_matrix[0]))] for _ in range(len(a_matrix))]
+            token = b_row
+            for i in range(len(a_matrix)):
+                for j in range(len(b_matrix[0])):
+                    for k in range(token):
+                        c_matrix[i][j] += a_matrix[i][k] * b_matrix[k][j]
+            for i in range(len(c_matrix)):
+                for j in range(len(c_matrix[0])):
+                    print(c_matrix[i][j], end=' ')
+                print()
+        self.menu()
+
+    def transpose_menu(self):
+        print('1. Main diagonal')
+        print('2. Side diagonal')
+        print('3. Vertical line')
+        print('4. Horizontal line')
+        choice = int(input('Your choice: '))
+        a_param = list(map(int, input('Enter matrix size: ').split(' ')))
+        a_row = a_param[0]
+        a_column = a_param[1]
+        a_matrix = []
+        print('Enter matrix:')
+        for i in range(a_row):
+            a_matrix.append(list(map(float, input().split(' '))))
+
+        if choice == 1:
+            c_matrix = [[0.0 for _ in range(a_row)] for _ in range(a_column)]
+            for i in range(a_row):
+                for j in range(a_column):
+                    c_matrix[j][i] = a_matrix[i][j]
+
+            for i in range(len(c_matrix)):
+                for j in range(len(c_matrix[0])):
+                    print(c_matrix[i][j], end=" ")
+                print()
+
+        if choice == 2:
+            c_matrix = [[0.0 for _ in range(a_row)] for _ in range(a_column)]
+            for i in range(a_row):
+                for j in range(a_column):
+                    c_matrix[a_column - j - 1][a_row - i - 1] = a_matrix[i][j]
+
+            for i in range(len(c_matrix)):
+                for j in range(len(c_matrix[0])):
+                    print(c_matrix[i][j], end=" ")
+                print()
+
+        if choice == 3:
+            c_matrix = [[0.0 for _ in range(a_row)] for _ in range(a_column)]
+            for i in range(a_row):
+                for j in range(a_column):
+                    c_matrix[i][a_row - j - 1] = a_matrix[i][j]
+
+            for i in range(len(c_matrix)):
+                for j in range(len(c_matrix[0])):
+                    print(c_matrix[i][j], end=" ")
+                print()
+
+        if choice == 4:
+            c_matrix = [[0.0 for _ in range(a_row)] for _ in range(a_column)]
+            for i in range(a_row):
+                for j in range(a_column):
+                    c_matrix[a_column - i - 1][j] = a_matrix[i][j]
+
+            for i in range(len(c_matrix)):
+                for j in range(len(c_matrix[0])):
+                    print(c_matrix[i][j], end=" ")
+                print()
+        self.menu()
+
+    def determinant_matrix(self):
+        a_param = list(map(int, input('Enter matrix size: ').split(' ')))
+        a_row = a_param[0]
+        a_column = a_param[1]
+        a_matrix = []
+        print('Enter matrix:')
+        for i in range(a_row):
+            a_matrix.append(list(map(float, input().split(' '))))
+
+        print('The result is:')
+        print(determinant(a_matrix))
+        self.menu()
+
+    def matrix_inverse(self):
+        a_param = list(map(int, input('Enter matrix size: ').split(' ')))
+        a_row = a_param[0]
+        a_column = a_param[1]
+        a_matrix = []
+        print('Enter matrix:')
+        for i in range(a_row):
+            a_matrix.append(list(map(float, input().split(' '))))
+
+        if determinant(a_matrix):
+            inv = inverse(a_matrix)
+            for i in range(len(inv)):
+                for j in range(len(inv[0])):
+                    print(inv[i][j], end=" ")
+                print()
+
+        else:
+            print("This matrix doesn't have an inverse.")
+        self.menu()
+
+
+Matrix()
