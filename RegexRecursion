@@ -1,0 +1,60 @@
+def match(regex, word):
+    len_regex = len(regex)
+    char = regex[2] if len_regex > 2 else ''
+
+    if not regex:
+        return True
+    elif not word:
+        return False
+    elif len_regex > 1 and regex[0] == '\\':
+        if regex[1] == word[0]:
+            return match(regex[2:], word[1:])
+        else:
+            return False
+    elif len_regex > 1 and regex[1] == '?':
+        if regex[0] == word[0]:
+            return match(regex[2:], word[1:])
+        else:
+            return match(regex[2:], word)
+    elif len_regex > 1 and regex[1] == '*':
+        if regex[0] == word[0] or (char and regex[0] == '.' and word[0] != regex[2]):
+            return match(regex, word[1:])
+        else:
+            return match(regex[2:], word)
+    elif len_regex > 1 and regex[1] == '+':
+        if not char:
+            return True
+        if regex[0] == word[0] or (char and regex[0] == '.' and word[0] != regex[2]):
+            return match(regex[0] + '*' + regex[2:], word[1:])
+        else:
+            return False
+    elif regex[0] == '.':
+        return match(regex[1:], word[1:])
+    elif regex[0] == word[0]:
+        return match(regex[1:], word[1:])
+    return False
+
+
+def my_regex(regex, word):
+    if not regex:
+        return True
+    elif not word:
+        return False
+    if regex.startswith('^'):
+        pos_min = min(regex.find('?'), regex.find('*'), regex.find('+'))
+        start_regex = regex[:pos_min]
+        if match(start_regex[1:len(word)], word):
+            regex = regex[1:]
+        else:
+            return False
+    if regex.endswith('$'):
+        pos_max = max(regex.find('?'), regex.find('*'), regex.find('+'))
+        escapes = len(regex.split('\\')) - 1
+        end_regex = regex[pos_max+1:]
+        return match(end_regex[:-1], word[-len(end_regex[:-1]) + escapes:]) if end_regex[:-1] else False
+
+    return True if match(regex, word) else my_regex(regex, word[1:])
+
+
+pattern, sample = input().split('|')
+print(my_regex(pattern, sample))
